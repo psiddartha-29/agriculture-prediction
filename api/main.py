@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 
 import joblib
@@ -5,17 +6,22 @@ import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-BASE_DIR = Path(__file__).resolve().parents[1]  # project root (PS1/)
-MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
-model = joblib.load(MODELS_DIR / "best_yield_prediction_model.pkl")
-fertilizer_model = joblib.load(MODELS_DIR / "fertilizer_prediction_model1.pkl")
-pesticide_model = joblib.load(MODELS_DIR / "pesticide_prediction_model.pkl")
+YIELD_FILE = "best_yield_prediction_model.pkl"
+FERTILIZER_FILE = "fertilizer_prediction_model1.pkl"
+PESTICIDE_FILE = "pesticide_prediction_model.pkl"
+
+
+@lru_cache(maxsize=1)  # only ONE model stays in RAM at a time
+def get_model(name: str):
+    return joblib.load(MODELS_DIR / name)
+
 
 app = FastAPI(
     title="Agricultural Yield Prediction",
     description="API for predicting agricultural crop yield",
-    version="1.0"
+    version="1.0",
 )
 
 
@@ -50,18 +56,17 @@ class PesticideRequest(BaseModel):
 
 @app.get("/")
 def home():
-    return {
-        "message": "Agricultural Yield Prediction API is running"
-    }
+    return {"message": "Agricultural Yield Prediction API is running"}
 
 
 @app.get("/health")
 def health():
+    # Checks the files exist without loading them (loading would use RAM)
     return {
         "status": "API is working",
-        "yield_model_loaded": True,
-        "fertilizer_model_loaded": True,
-        "pesticide_model_loaded": True
+        "yield_model_found": (MODELS_DIR / YIELD_FILE).exists(),
+        "fertilizer_model_found": (MODELS_DIR / FERTILIZER_FILE).exists(),
+        "pesticide_model_found": (MODELS_DIR / PESTICIDE_FILE).exists(),
     }
 
 
@@ -77,16 +82,16 @@ def predict_yield(data: YieldRequest):
         "Fertilizer_kg": data.fertilizer_kg,
         "Pesticide_kg": data.pesticide_kg,
         "Fertilizer_per_acre": data.fertilizer_kg / data.area_acres,
-        "Pesticide_per_acre": data.pesticide_kg / data.area_acres
+        "Pesticide_per_acre": data.pesticide_kg / data.area_acres,
     }])
 
-    prediction = model.predict(input_data)[0]
+    prediction = get_model(YIELD_FILE).predict(input_data)[0]
 
     return {
         "crop": data.crop,
         "state": data.state,
         "year": data.crop_year,
-        "predicted_yield_kg_per_acre": round(float(prediction), 2)
+        "predicted_yield_kg_per_acre": round(float(prediction), 2),
     }
 
 
@@ -98,16 +103,16 @@ def predict_fertilizer(data: FertilizerRequest):
         "Season": data.season,
         "State": data.state,
         "Area_acres": data.area_acres,
-        "Annual_Rainfall": data.annual_rainfall
+        "Annual_Rainfall": data.annual_rainfall,
     }])
 
-    prediction = fertilizer_model.predict(input_data)[0]
+    prediction = get_model(FERTILIZER_FILE).predict(input_data)[0]
 
     return {
         "crop": data.crop,
         "state": data.state,
         "year": data.crop_year,
-        "predicted_fertilizer_quantity": round(float(prediction), 2)
+        "predicted_fertilizer_quantity": round(float(prediction), 2),
     }
 
 
@@ -119,14 +124,14 @@ def predict_pesticide(data: PesticideRequest):
         "Season": data.season,
         "State": data.state,
         "Area_acres": data.area_acres,
-        "Annual_Rainfall_mm": data.annual_rainfall_mm
+        "Annual_Rainfall_mm": data.annual_rainfall_mm,
     }])
 
-    prediction = pesticide_model.predict(input_data)[0]
+    prediction = get_model(PESTICIDE_FILE).predict(input_data)[0]
 
     return {
         "crop": data.crop,
         "state": data.state,
         "year": data.crop_year,
-        "predicted_pesticide_quantity": round(float(prediction), 2)
+        "predicted_pesticide_quantity": round(float(prediction), 2),
     }
