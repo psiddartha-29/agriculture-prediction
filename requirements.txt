@@ -1,8 +1,6 @@
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn==1.7.2
-joblib
 fastapi
-uvicorn[standard]
+uvicorn
+scikit-learn==1.9.1
+numpy
+pandas
+joblib
