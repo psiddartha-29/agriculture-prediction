@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Secrets (never push these)
+.env
+*.key
+config.secret.json
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Data and outputs (large files)
+data/
+datasets/
+*.csv
+logs/
+*.log
+
+# Build files
+build/
+dist/
+*.egg-info/

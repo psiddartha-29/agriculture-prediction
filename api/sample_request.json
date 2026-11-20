@@ -1,0 +1,11 @@
+
+{
+    "crop": "Rice",
+    "crop_year": 2024,
+    "season": "Kharif",
+    "state": "Telangana",
+    "area_acres": 2.5,
+    "annual_rainfall_mm": 850,
+    "fertilizer_kg": 120,
+    "pesticide_kg": 2.5
+}
