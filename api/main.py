@@ -4,6 +4,7 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
 
 BASE_DIR = Path(__file__).resolve().parents[1]  # project root (PS1/)
 MODELS_DIR = BASE_DIR / "models"
@@ -17,7 +18,13 @@ app = FastAPI(
     description="API for predicting agricultural crop yield",
     version="1.0"
 )
-
+# Allow the frontend to call this API from the browser
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # allows any website; we can restrict this later
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class YieldRequest(BaseModel):
     crop: str = Field(..., min_length=2)
